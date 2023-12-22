@@ -1,0 +1,62 @@
+---
+title: "Final Project Group 8"
+author: Jose Roland Juntanilla,Aaron John Fermano,Anjelo Marco Cabana,Edward Deocampo
+  BSIT 2C
+date: "2023-12-22"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Select a website that you want to scrape 300 reviews. 
+```{r}
+library(dplyr)
+library(rvest)
+
+operamovie <- data.frame()
+
+for (movies in 1:12) {
+  linkmovie <- paste0("https://www.imdb.com/title/tt0293508/reviews/?ref_=tt_ov_rt", movies)
+  
+  websitelink <- linkmovie
+  
+  respectsession <- html_session(websitelink, user_agent = "Webscraping for Final Project in our subject")
+  
+  scrapemovies <- function(session, css_selector){
+    page <- session %>%
+      read_html()
+    page %>%
+      html_nodes(css_selector) %>%
+      html_text(trim = TRUE)
+  }
+
+  scraped_content <- scrapemovies(respectsession, ".text.show-more__control") 
+  
+  websitereviews <- data.frame(Review = scraped_content)
+  
+  operamovie <- rbind(operamovie, websitereviews)
+}
+
+# Collect usernames, titles, and dates
+operamovie$Username <- scrapemovies(respectsession, "span.display-name-link") 
+operamovie$Title <- scrapemovies(respectsession, "a.title") 
+operamovie$Date <- scrapemovies(respectsession, "span.review-date")
+
+# Collect ratings
+ratings <- respectsession %>%
+  read_html() %>%
+  html_nodes(".ipl-ratings-bar") %>%
+  html_text(trim = TRUE)
+
+# Add ratings to operamovie data frame
+operamovie$Rating <- ratings[1:nrow(operamovie)]
+
+operamovie[1:150, 1:5]
+plot(operamovie)
+
+
+```
